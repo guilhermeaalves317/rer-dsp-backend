@@ -10,7 +10,6 @@ import java.util.List;
 public record AboutConfigResponse(
 		boolean enabled,
 		String bannerTitle,
-		String defaultTabId,
 		List<AboutTabResponse> tabs
 ) {
 

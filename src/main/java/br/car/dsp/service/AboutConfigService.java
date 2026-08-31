@@ -31,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AboutConfigService {
 
-	private static final AboutConfigResponse DISABLED = new AboutConfigResponse(false, null, null, List.of());
+	private static final AboutConfigResponse DISABLED = new AboutConfigResponse(false, null, List.of());
 
 	private final AboutConfigProperties properties;
 	private final ObjectMapper objectMapper;
@@ -84,7 +84,7 @@ public class AboutConfigService {
 			}
 		}
 
-		return new AboutConfigResponse(true, index.bannerTitle(), index.defaultTabId(), tabs);
+		return new AboutConfigResponse(true, index.bannerTitle(), tabs);
 	}
 
 	private String readTabContent(AboutIndexTab tab) {
@@ -137,7 +137,6 @@ public class AboutConfigService {
 	 */
 	private record AboutIndex(
 			boolean enabled,
-			String defaultTabId,
 			String bannerTitle,
 			List<AboutIndexTab> tabs
 	) {

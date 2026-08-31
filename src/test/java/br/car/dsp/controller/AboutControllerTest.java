@@ -29,7 +29,6 @@ class AboutControllerTest {
 		AboutConfigResponse expected = new AboutConfigResponse(
 				true,
 				"About",
-				"overview",
 				List.of(new AboutTabResponse("overview", "Overview", "# Overview\n"))
 		);
 		when(aboutConfigService.getAboutConfig()).thenReturn(expected);
@@ -38,7 +37,6 @@ class AboutControllerTest {
 
 		assertEquals(expected, result);
 		assertEquals("About", result.bannerTitle());
-		assertEquals("overview", result.defaultTabId());
 		assertEquals(1, result.tabs().size());
 		assertEquals("overview", result.tabs().getFirst().id());
 		verify(aboutConfigService).getAboutConfig();

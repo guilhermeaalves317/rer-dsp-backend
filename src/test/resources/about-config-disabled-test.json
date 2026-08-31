@@ -1,6 +1,5 @@
 {
   "enabled": false,
-  "defaultTabId": "overview",
   "bannerTitle": "About Test",
   "tabs": [
     {

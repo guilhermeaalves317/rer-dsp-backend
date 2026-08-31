@@ -32,7 +32,6 @@ class AboutConfigServiceTest {
 		assertNotNull(config);
 		assertTrue(config.enabled());
 		assertEquals("About Test", config.bannerTitle());
-		assertEquals("overview", config.defaultTabId());
 		assertEquals(2, config.tabs().size());
 
 		var overview = config.tabs().getFirst();
