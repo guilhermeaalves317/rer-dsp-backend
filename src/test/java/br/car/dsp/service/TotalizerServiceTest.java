@@ -9,17 +9,16 @@ import br.car.dsp.dto.HomeDetailSearchConfigResponse;
 import br.car.dsp.dto.HomeKpisConfigResponse;
 import br.car.dsp.dto.InstallationConfigResponse;
 import br.car.dsp.dto.KpiCardConfigResponse;
-import br.car.dsp.dto.HomeDetailSearchConfigResponse;
+import br.car.dsp.dto.KpiTotalsProjection;
 import br.car.dsp.dto.HomeScreenConfigResponse;
-import br.car.dsp.dto.ScreenConfigResponse;
 import br.car.dsp.dto.ScreensConfigResponse;
-import br.car.dsp.dto.ThemeTotalsAggregate;
 import br.car.dsp.dto.TotalizerFilterRequest;
 import br.car.dsp.dto.TotalizerResponse;
 import br.car.dsp.model.AreaOfInterest;
 import br.car.dsp.model.TerritoryLevel2;
 import br.car.dsp.model.TerritoryLevel3;
 import br.car.dsp.repository.AreaOfInterestRepository;
+import br.car.dsp.repository.KpiMeasureRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -63,6 +62,9 @@ class TotalizerServiceTest {
 	private AreaOfInterestRepository areaOfInterestRepository;
 
 	@Mock
+	private KpiMeasureRepository kpiMeasureRepository;
+
+	@Mock
 	private InstallationConfigService installationConfigService;
 
 	@Mock
@@ -79,12 +81,9 @@ class TotalizerServiceTest {
 						"un.",
 						"ha"
 				));
-		lenient().when(areaOfInterestRepository.sumThemesAll())
-				.thenReturn(themes(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
-		lenient().when(areaOfInterestRepository.sumThemesByLevel2Ids(anyCollection()))
-				.thenReturn(themes(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
-		lenient().when(areaOfInterestRepository.sumThemesByLevel3Ids(anyCollection()))
-				.thenReturn(themes(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+		lenient().when(kpiMeasureRepository.sumByKpiNameAll()).thenReturn(List.of());
+		lenient().when(kpiMeasureRepository.sumByKpiNameAndLevel2Ids(anyCollection())).thenReturn(List.of());
+		lenient().when(kpiMeasureRepository.sumByKpiNameAndLevel3Ids(anyCollection())).thenReturn(List.of());
 		lenient().when(areaOfInterestRepository.findCentroidWgs84(anyString()))
 				.thenReturn(Optional.of(centroid(-15.75, -47.85)));
 	}
@@ -93,12 +92,11 @@ class TotalizerServiceTest {
 	void getTotalizers_WhenFilterNull_ShouldUseRealAreaOfInterestAggregate() {
 		when(areaOfInterestRepository.aggregateAll())
 				.thenReturn(aggregate(508L, new BigDecimal("160652.4")));
-		when(areaOfInterestRepository.sumThemesAll())
-				.thenReturn(themes(
-						new BigDecimal("10.4"),
-						new BigDecimal("20.6"),
-						BigDecimal.ZERO,
-						new BigDecimal("5")
+		when(kpiMeasureRepository.sumByKpiNameAll())
+				.thenReturn(List.of(
+						projection("theme_1", new BigDecimal("10.4")),
+						projection("theme_2", new BigDecimal("20.6")),
+						projection("theme_4", new BigDecimal("5"))
 				));
 
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
@@ -119,7 +117,7 @@ class TotalizerServiceTest {
 		assertEquals(0.0, result.get(3).value());
 		assertEquals(5.0, result.get(4).value());
 		verify(areaOfInterestRepository).aggregateAll();
-		verify(areaOfInterestRepository).sumThemesAll();
+		verify(kpiMeasureRepository).sumByKpiNameAll();
 	}
 
 	@Test
@@ -136,7 +134,7 @@ class TotalizerServiceTest {
 		assertEquals(12.0, primary.value());
 		assertEquals(101L, primary.subItemValue());
 		verify(areaOfInterestRepository).aggregateByLevel2Ids(List.of("DF"));
-		verify(areaOfInterestRepository).sumThemesByLevel2Ids(List.of("DF"));
+		verify(kpiMeasureRepository).sumByKpiNameAndLevel2Ids(List.of("DF"));
 	}
 
 	@Test
@@ -154,7 +152,7 @@ class TotalizerServiceTest {
 		assertEquals(3.0, primary.value());
 		assertEquals(45L, primary.subItemValue());
 		verify(areaOfInterestRepository).aggregateByLevel3Ids(eq(List.of("3200607")));
-		verify(areaOfInterestRepository).sumThemesByLevel3Ids(eq(List.of("3200607")));
+		verify(kpiMeasureRepository).sumByKpiNameAndLevel3Ids(eq(List.of("3200607")));
 	}
 
 	@Test
@@ -587,7 +585,7 @@ class TotalizerServiceTest {
 	void getTotalizers_ShouldSkipNullAndBlankCards() {
 		List<KpiCardConfigResponse> cards = new ArrayList<>();
 		cards.add(null);
-		cards.add(new KpiCardConfigResponse(" ", "Blank", "ha", null, null, 2, false));
+		cards.add(new KpiCardConfigResponse(" ", "Blank", "ha", null, null, 2, false, null));
 		cards.add(new KpiCardConfigResponse(
 				TotalizerService.CODE_AREA_OF_INTEREST,
 				"Registered properties",
@@ -595,7 +593,8 @@ class TotalizerServiceTest {
 				"ha",
 				null,
 				1,
-				true
+				true,
+				null
 		));
 		when(installationConfigService.getInstallationConfig())
 				.thenReturn(installationConfigWithCustomCards(cards, 5));
@@ -657,7 +656,7 @@ class TotalizerServiceTest {
 	@Test
 	void getTotalizers_WhenThemeAggregateIsNull_ShouldReturnZeroForThemeCards() {
 		when(areaOfInterestRepository.aggregateAll()).thenReturn(aggregate(1L, BigDecimal.ONE));
-		when(areaOfInterestRepository.sumThemesAll()).thenReturn(null);
+		when(kpiMeasureRepository.sumByKpiNameAll()).thenReturn(null);
 
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
 
@@ -667,7 +666,12 @@ class TotalizerServiceTest {
 	@Test
 	void getTotalizers_WhenThemeValuesAreNull_ShouldTreatAsZero() {
 		when(areaOfInterestRepository.aggregateAll()).thenReturn(aggregate(1L, BigDecimal.ONE));
-		when(areaOfInterestRepository.sumThemesAll()).thenReturn(themes(null, null, null, null));
+		when(kpiMeasureRepository.sumByKpiNameAll()).thenReturn(List.of(
+				projection("theme_1", null),
+				projection("theme_2", null),
+				projection("theme_3", null),
+				projection("theme_4", null)
+		));
 
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
 
@@ -684,8 +688,13 @@ class TotalizerServiceTest {
 		when(installationConfigService.getInstallationConfig())
 				.thenReturn(installationConfigWithCustomCards(cards, 5));
 		when(areaOfInterestRepository.aggregateAll()).thenReturn(aggregate(1L, BigDecimal.ONE));
-		when(areaOfInterestRepository.sumThemesAll())
-				.thenReturn(themes(BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN));
+		when(kpiMeasureRepository.sumByKpiNameAll())
+				.thenReturn(List.of(
+						projection("theme_1", BigDecimal.TEN),
+						projection("theme_2", BigDecimal.TEN),
+						projection("theme_3", BigDecimal.TEN),
+						projection("theme_4", BigDecimal.TEN)
+				));
 
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
 
@@ -757,12 +766,17 @@ class TotalizerServiceTest {
 						optionalLabel,
 						"#CED6E5",
 						1,
-						true
+						true,
+						null
 				),
-				new KpiCardConfigResponse(TotalizerService.CODE_THEME_1, "Theme 1", "ha", null, "#C1D2F2", 2, false),
-				new KpiCardConfigResponse(TotalizerService.CODE_THEME_2, "Theme 2", "ha", null, "#98B7EC", 3, false),
-				new KpiCardConfigResponse(TotalizerService.CODE_THEME_3, "Theme 3", "ha", null, "#97CCE3", 4, false),
-				new KpiCardConfigResponse(TotalizerService.CODE_THEME_4, "Theme 4", "ha", null, "#B6C3D9", 5, false)
+				new KpiCardConfigResponse(
+						TotalizerService.CODE_THEME_1, "Theme 1", "ha", null, "#C1D2F2", 2, false, "theme_1"),
+				new KpiCardConfigResponse(
+						TotalizerService.CODE_THEME_2, "Theme 2", "ha", null, "#98B7EC", 3, false, "theme_2"),
+				new KpiCardConfigResponse(
+						TotalizerService.CODE_THEME_3, "Theme 3", "ha", null, "#97CCE3", 4, false, "theme_3"),
+				new KpiCardConfigResponse(
+						TotalizerService.CODE_THEME_4, "Theme 4", "ha", null, "#B6C3D9", 5, false, "theme_4")
 		);
 		return new InstallationConfigResponse(
 				List.of(),
@@ -829,7 +843,21 @@ class TotalizerServiceTest {
 	}
 
 	private static KpiCardConfigResponse card(String code, String label, int order) {
-		return new KpiCardConfigResponse(code, label, "ha", null, null, order, false);
+		return new KpiCardConfigResponse(code, label, "ha", null, null, order, false, null);
+	}
+
+	private static KpiTotalsProjection projection(String kpiName, BigDecimal total) {
+		return new KpiTotalsProjection() {
+			@Override
+			public String getKpiName() {
+				return kpiName;
+			}
+
+			@Override
+			public BigDecimal getTotal() {
+				return total;
+			}
+		};
 	}
 
 	private static CentroidWgs84Projection partialCentroid(Double latitude, Double longitude) {
@@ -870,35 +898,6 @@ class TotalizerServiceTest {
 			@Override
 			public BigDecimal getTotalArea() {
 				return totalArea;
-			}
-		};
-	}
-
-	private static ThemeTotalsAggregate themes(
-			BigDecimal t1,
-			BigDecimal t2,
-			BigDecimal t3,
-			BigDecimal t4
-	) {
-		return new ThemeTotalsAggregate() {
-			@Override
-			public BigDecimal getTheme1() {
-				return t1;
-			}
-
-			@Override
-			public BigDecimal getTheme2() {
-				return t2;
-			}
-
-			@Override
-			public BigDecimal getTheme3() {
-				return t3;
-			}
-
-			@Override
-			public BigDecimal getTheme4() {
-				return t4;
 			}
 		};
 	}
