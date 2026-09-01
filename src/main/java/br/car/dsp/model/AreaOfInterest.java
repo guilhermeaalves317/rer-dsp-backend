@@ -10,11 +10,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
@@ -36,9 +34,8 @@ public class AreaOfInterest {
 	@Column(name = "id", length = 255, nullable = false)
 	private String id;
 
-	@Type(FlexibleLocalDateTimeType.class)
-	@Column(name = "registration_date", nullable = false)
-	private LocalDateTime registrationDate;
+	@Column(name = "created_at", nullable = false)
+	private OffsetDateTime registrationDate;
 
 	@Column(name = "updated_at")
 	private OffsetDateTime alterationDate;

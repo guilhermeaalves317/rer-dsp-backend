@@ -915,7 +915,7 @@ class TotalizerServiceTest {
 		GeometryFactory factory = new GeometryFactory(new PrecisionModel(), 0);
 		AreaOfInterest areaOfInterest = new AreaOfInterest();
 		areaOfInterest.setId("DF-123");
-		areaOfInterest.setRegistrationDate(LocalDateTime.of(2020, 1, 10, 8, 30));
+		areaOfInterest.setRegistrationDate(OffsetDateTime.of(2020, 1, 10, 8, 30, 0, 0, ZoneOffset.UTC));
 		areaOfInterest.setAlterationDate(OffsetDateTime.of(2024, 6, 15, 14, 0, 0, 0, ZoneOffset.UTC));
 		areaOfInterest.setArea(new BigDecimal("120.50"));
 		areaOfInterest.setTerritoryLevel3(level3);

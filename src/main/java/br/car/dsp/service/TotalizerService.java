@@ -56,7 +56,7 @@ public class TotalizerService {
 
 	private static final Set<String> CANONICAL_AOI_DETAIL_FIELDS = Set.of(
 			"id",
-			"registration_date",
+			"created_at",
 			"updated_at",
 			"area"
 	);
@@ -226,7 +226,7 @@ public class TotalizerService {
 	) {
 		return switch (field) {
 			case "id" -> areaOfInterest.getId();
-			case "registration_date" -> formatDate(areaOfInterest.getRegistrationDate());
+			case "created_at" -> formatDate(areaOfInterest.getRegistrationDate());
 			case "updated_at" -> formatDate(areaOfInterest.getAlterationDate());
 			case "area" -> areaOfInterest.getArea();
 			case "calculated.latitude" -> centroid.latitude();
@@ -383,13 +383,6 @@ public class TotalizerService {
 			return null;
 		}
 		return new TerritoryLevelRefResponse(id, name);
-	}
-
-	private static String formatDate(LocalDateTime value) {
-		if (value == null) {
-			return null;
-		}
-		return value.toLocalDate().format(ISO_DATE);
 	}
 
 	private static String formatDate(OffsetDateTime value) {
