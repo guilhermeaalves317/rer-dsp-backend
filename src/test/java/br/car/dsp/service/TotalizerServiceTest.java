@@ -106,16 +106,16 @@ class TotalizerServiceTest {
 		assertEquals(TotalizerService.CODE_AREA_OF_INTEREST, primary.code());
 		assertEquals("Registered properties", primary.name());
 		assertEquals(508.0, primary.value());
-		assertEquals(160652L, primary.subItemValue());
+		assertEquals(160652.40, primary.subItemValue());
 		assertEquals("un.", primary.unitOfMeasurement());
 		assertEquals("ha", primary.subItemName());
 
 		assertEquals(TotalizerService.CODE_THEME_1, result.get(1).code());
-		assertEquals(10.0, result.get(1).value());
+		assertEquals(10.40, result.get(1).value());
 		assertEquals(TotalizerService.CODE_THEME_2, result.get(2).code());
-		assertEquals(21.0, result.get(2).value());
+		assertEquals(20.60, result.get(2).value());
 		assertEquals(0.0, result.get(3).value());
-		assertEquals(5.0, result.get(4).value());
+		assertEquals(5.00, result.get(4).value());
 		verify(areaOfInterestRepository).aggregateAll();
 		verify(kpiMeasureRepository).sumByKpiNameAll();
 	}
@@ -132,7 +132,7 @@ class TotalizerServiceTest {
 
 		TotalizerResponse primary = result.getFirst();
 		assertEquals(12.0, primary.value());
-		assertEquals(101L, primary.subItemValue());
+		assertEquals(100.60, primary.subItemValue());
 		verify(areaOfInterestRepository).aggregateByLevel2Ids(List.of("DF"));
 		verify(kpiMeasureRepository).sumByKpiNameAndLevel2Ids(List.of("DF"));
 	}
@@ -150,7 +150,7 @@ class TotalizerServiceTest {
 
 		TotalizerResponse primary = result.getFirst();
 		assertEquals(3.0, primary.value());
-		assertEquals(45L, primary.subItemValue());
+		assertEquals(45.00, primary.subItemValue());
 		verify(areaOfInterestRepository).aggregateByLevel3Ids(eq(List.of("3200607")));
 		verify(kpiMeasureRepository).sumByKpiNameAndLevel3Ids(eq(List.of("3200607")));
 	}
@@ -304,7 +304,7 @@ class TotalizerServiceTest {
 		assertEquals(TotalizerService.CODE_AREA_OF_INTEREST, primary.code());
 		assertEquals(TotalizerService.CODE_AREA_OF_INTEREST, primary.name());
 		assertEquals(10.0, primary.value());
-		assertEquals(25L, primary.subItemValue());
+		assertEquals(25.40, primary.subItemValue());
 		assertEquals(AreaOfInterestMeasuresConfigResponse.DEFAULT_LABEL, primary.unitOfMeasurement());
 		assertEquals(AreaOfInterestMeasuresConfigResponse.DEFAULT_UNIT, primary.subItemName());
 	}
@@ -452,7 +452,7 @@ class TotalizerServiceTest {
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
 
 		assertEquals(0.0, result.getFirst().value());
-		assertEquals(13L, result.getFirst().subItemValue());
+		assertEquals(12.60, result.getFirst().subItemValue());
 	}
 
 	@Test
@@ -462,7 +462,7 @@ class TotalizerServiceTest {
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
 
 		assertEquals(7.0, result.getFirst().value());
-		assertEquals(0L, result.getFirst().subItemValue());
+		assertEquals(0.0, result.getFirst().subItemValue());
 	}
 
 	@Test
@@ -650,7 +650,7 @@ class TotalizerServiceTest {
 
 		TotalizerResponse primary = result.getFirst();
 		assertEquals(0.0, primary.value());
-		assertEquals(0L, primary.subItemValue());
+		assertEquals(0.0, primary.subItemValue());
 	}
 
 	@Test
@@ -688,13 +688,6 @@ class TotalizerServiceTest {
 		when(installationConfigService.getInstallationConfig())
 				.thenReturn(installationConfigWithCustomCards(cards, 5));
 		when(areaOfInterestRepository.aggregateAll()).thenReturn(aggregate(1L, BigDecimal.ONE));
-		when(kpiMeasureRepository.sumByKpiNameAll())
-				.thenReturn(List.of(
-						projection("theme_1", BigDecimal.TEN),
-						projection("theme_2", BigDecimal.TEN),
-						projection("theme_3", BigDecimal.TEN),
-						projection("theme_4", BigDecimal.TEN)
-				));
 
 		List<TotalizerResponse> result = totalizerService.getTotalizers(null);
 

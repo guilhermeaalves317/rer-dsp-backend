@@ -288,11 +288,11 @@ public class TotalizerService {
 			return toAreaOfInterestTotalizer(aggregate, card);
 		}
 		BigDecimal themeSum = kpiTotalForCard(card, kpiTotals);
-		long value = themeSum.setScale(0, RoundingMode.HALF_UP).longValue();
+		double value = themeSum.setScale(2, RoundingMode.HALF_UP).doubleValue();
 		return new TotalizerResponse(
 				card.label(),
 				code,
-				(double) value,
+				value,
 				null,
 				null,
 				card.unitOfMeasurement()
@@ -309,7 +309,7 @@ public class TotalizerService {
 		BigDecimal totalArea = aggregate != null && aggregate.getTotalArea() != null
 				? aggregate.getTotalArea()
 				: BigDecimal.ZERO;
-		long areaSum = totalArea.setScale(0, RoundingMode.HALF_UP).longValue();
+		double areaSum = totalArea.setScale(2, RoundingMode.HALF_UP).doubleValue();
 		return new TotalizerResponse(
 				card.label(),
 				CODE_AREA_OF_INTEREST,
