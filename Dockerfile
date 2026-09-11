@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ============================
 # 1) Dependencies Stage
 # ============================
@@ -40,6 +41,20 @@ RUN apt-get update && apt-get upgrade -y \
     && apt-get clean
 
 COPY --from=build /app/build/libs/${DSP_BACKEND_PROJECT_NAME}-${DSP_BACKEND_VERSION}.jar /app/app.jar
+
+# Extra dsp_config context (rer-dsp-core/config) injected by Compose.
+COPY --from=dsp_config docker/select-runtime-config.sh /tmp/select-runtime-config.sh
+COPY --from=dsp_config installation/ /tmp/installation/
+COPY --from=dsp_config map/ /tmp/map/
+COPY --from=dsp_config downloads/ /tmp/downloads/
+COPY --from=dsp_config about/ /tmp/about/
+RUN chmod +x /tmp/select-runtime-config.sh \
+    && mkdir -p /config \
+    && /tmp/select-runtime-config.sh pick /tmp/installation installation-config.json /config/installation-config.json \
+    && /tmp/select-runtime-config.sh pick /tmp/map mapLayersConfig.json /config/mapLayersConfig.json \
+    && /tmp/select-runtime-config.sh pick /tmp/downloads downloadThemesConfig.json /config/downloadThemesConfig.json \
+    && /tmp/select-runtime-config.sh about /tmp/about /config/about \
+    && rm -rf /tmp/installation /tmp/map /tmp/downloads /tmp/about /tmp/select-runtime-config.sh
 
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
